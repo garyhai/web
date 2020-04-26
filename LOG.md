@@ -8,6 +8,8 @@
 
 在Review ns_web 代码时，看到entry初始化client时引入了一个downstream的死锁点。而query函数中也会检查client是否初始化。按照规范，不能够在entry中调用耗时的函数，特别是会导致连环死锁的激活函数。解决这个问题的一个思路是采用一种可以类似[lazy_static](https://docs.rs/lazy_static/1.4.0/lazy_static/)的函数，按需进行一次性的初始化，并且最好是允许在读操作函数中执行。翻查一下crate，发现[once_cell](https://docs.rs/once_cell/1.3.1/once_cell/)能够很好解决这个问题。于是简单用once_cell更换lazy_static，果然非常平滑，替换完毕所有测试及例子运行正常。后续需要把inner的Option用OnceCell替换。
 
+使用`submodule`命令把web和writings两个文案库合并到一处，以后可以使用typora进行统一文档书写了。
+
 ## 2020年4月25日 星期六
 
 今天tokio升级到了v0.2.19，对ns来说，可以不再使用性能弱的`tokio::io::split`，而是使用`tokio::net::TcpStream::into_split`，一方面是性能好，另一方面是可以通过 deref 获取TcpStream进行更为细致的操作，比如关闭连接。
