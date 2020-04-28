@@ -1,3 +1,17 @@
+## 2020年4月28日 星期二
+
+昨天花了一天在`ns_web::web_server`上添加扩充能力。本来这个模块已经提供了ns的分发机制，但是为了MVP快速交付计划，先期使用warp自带的静态文件服务filter实现本地文件系统访问，然后使用juniper_warp来实现GraphQL接口。结果，仅仅是想把`warp::fs::dir`接收`warp::path::param`参数这件事情上，被warp内部的seal机制折腾了一整天没有搞定。最终还是决定不要在原有轻量的ns_web上增加太多内容，单独建立一个ns_app_server来MVP吧。
+
+今天看到 [smol](https://github.com/stjepang/smol) 运行时终于开源发布。第一时间clone下来尝试一下，的确很不错，有很多非常新颖的想法。关键是很轻量，很兼容，甚至还专门针对tokio做了一个runtime handle预设模式。先把[async-plugins-test](https://github.com/garyhai/async-plugins-test)改造测试一下，不会报错，会堵塞在await状态，使用`smol::run`的话，倒是可以正常执行，可惜这个run是同步过程。如果smol能够在找不到runtime时自动创建一个就好了。如果不介意堵塞的话，smol也需要一个函数用于判断是否存在运行时，否则无脑启动`smol::run`时会报runtime嵌套错误。
+
+## 2020年4月27日 星期一
+
+太多的事务要处理，需要大幅度压缩编码时间。好在系统级的开发工作暂时告一个段落。开发的重点转向应用开发。
+
+第一个应用锁定为 `ns_app_server` 是一个Web应用后端平台。当前主要提供Web服务和数据服务。其中数据服务支持多种数据库后端、redis及文件系统。提供REST接口和GraphQL接口。数据模型统一使用GraphQL动态构建，无缝合并所有的数据后端。
+
+今天的开发任务是在 `web_server` 中增加根据entry配置分发到不同的filter的功能，先期支持 something, file system, graphql。
+
 ## 2020年4月26日 星期日
 
 为了解决`ns_rpc`可能的卡点和超时计算问题，用[tokio::select](https://docs.rs/tokio/0.2.19/tokio/macro.select.html)替换了[futures::select](https://docs.rs/futures/0.3.4/futures/macro.select.html)。然后发现在`select`宏中使用`await`时会造成卡点，使得`select`调度不公平。为了解决这个问题，又是硬着头皮把`futures`的各种解决方法试了一大圈，总算是搞定了事情，但是编程效率太低了。往好处想，也算是把`futures`和`tokio`又学习了一遍。
@@ -9,6 +23,8 @@
 在Review ns_web 代码时，看到entry初始化client时引入了一个downstream的死锁点。而query函数中也会检查client是否初始化。按照规范，不能够在entry中调用耗时的函数，特别是会导致连环死锁的激活函数。解决这个问题的一个思路是采用一种可以类似[lazy_static](https://docs.rs/lazy_static/1.4.0/lazy_static/)的函数，按需进行一次性的初始化，并且最好是允许在读操作函数中执行。翻查一下crate，发现[once_cell](https://docs.rs/once_cell/1.3.1/once_cell/)能够很好解决这个问题。于是简单用once_cell更换lazy_static，果然非常平滑，替换完毕所有测试及例子运行正常。后续需要把inner的Option用OnceCell替换。
 
 使用`submodule`命令把web和writings两个文案库合并到一处，以后可以使用typora进行统一文档书写了。
+
+使用`OnceCell<Inner>`替换`Option<Inner>`，也是出乎意料的顺畅。本来做好升级大版本的准备，实际上看对现有系统影响非常小。
 
 ## 2020年4月25日 星期六
 
