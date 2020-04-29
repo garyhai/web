@@ -1,8 +1,18 @@
+## 2020年4月29日 星期三
+
+被warp的设计搞得灰头土脸的我，决定还是别MVP了，直接进入全面GraphQL阶段吧。也就是说，今天开始启动 ns v0.4.0 的开发。之前的开发完成了通用型Thing对象的Graph封装，主要用于数据库及非rust语言环境。新的版本开始针对专用型Thing对象，面向rust语言及GraphQL语言进行封装和开发。
+
+基本思路就是基于 [juniper](https://graphql-rust.github.io/juniper/current/) 及其Graph对象生成模式定义Thing，然后静态或者动态挂载数据行为。看到国内有一位战斗力极高的程序员在不到两个月时间里做成了一个完成度相当高的 GraphQL 库：[async-graphql](https://async-graphql.github.io/async-graphql/zh-CN/introduction.html) 也可以借鉴。特别是对于通用型事务，需要使用 [graphql-parser](https://github.com/graphql-rust/graphql-parser)来解析GraphQL请求，来对Thing交互，估计 async-graphql 也是这样做的。
+
+粗略阅读了一下 async-graphql 的源码，与当前juniper尚未发布的master版本有较大的重复。async-graphql 作为初生的项目，成熟度上还是有较大的成长空间。因此决定采用当前juniper的master版本，等其新版发布后正式采用。
+
 ## 2020年4月28日 星期二
 
 昨天花了一天在`ns_web::web_server`上添加扩充能力。本来这个模块已经提供了ns的分发机制，但是为了MVP快速交付计划，先期使用warp自带的静态文件服务filter实现本地文件系统访问，然后使用juniper_warp来实现GraphQL接口。结果，仅仅是想把`warp::fs::dir`接收`warp::path::param`参数这件事情上，被warp内部的seal机制折腾了一整天没有搞定。最终还是决定不要在原有轻量的ns_web上增加太多内容，单独建立一个ns_app_server来MVP吧。
 
 今天看到 [smol](https://github.com/stjepang/smol) 运行时终于开源发布。第一时间clone下来尝试一下，的确很不错，有很多非常新颖的想法。关键是很轻量，很兼容，甚至还专门针对tokio做了一个runtime handle预设模式。先把[async-plugins-test](https://github.com/garyhai/async-plugins-test)改造测试一下，不会报错，会堵塞在await状态，使用`smol::run`的话，倒是可以正常执行，可惜这个run是同步过程。如果smol能够在找不到runtime时自动创建一个就好了。如果不介意堵塞的话，smol也需要一个函数用于判断是否存在运行时，否则无脑启动`smol::run`时会报runtime嵌套错误。
+
+经过这几天对warp的应用，感觉这个crate还是有很多缺陷，主要体现在对类型处理和动态filter处理上。已经提交了issue，但愿作者能够修改。可惜了actix-web，主要是因为运行时兼容问题被我弃用。以后要好好审视一下具体使用哪个web框架了。
 
 ## 2020年4月27日 星期一
 
