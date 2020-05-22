@@ -2,4 +2,4 @@
 
 ## [医疗健康](health/index.md)
 
-## [工作日志](LOG.md)
+## [开发日志](LOG.md)

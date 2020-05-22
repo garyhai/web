@@ -1,3 +1,87 @@
+## 2020年5月22日 星期五
+
+使用rust语言对hypergraph建立数据模型时遇到了障碍。首先是自引用问题。下面的代码能够很好的通过编译，但是，对其实例化的时候出了问题：自引用泛化无法声明类型。
+
+```rust
+pub trait Scalar<T> {
+    fn scalar(&self) -> Option<&T>;
+    fn is_scalar(&self) -> bool;
+    fn to_scalar(&self) -> Option<T>;
+    fn as_scalar(&self) -> Option<T>;
+}
+
+pub trait Vector<K, V> {
+    fn add(&mut self, _: V) -> Option<K>;
+    fn get(&self, _: &K) -> Option<&V>;
+    fn get_mut(&mut self, _: &K) -> Option<&mut V>;
+    fn put(&mut self, _: &K, _: V) -> Option<V>;
+    fn delete(&mut self, _: &K) -> Option<V>;
+}
+
+impl<K: Clone + Ord, V> Vector<K, V> for BTreeMap<K, V> {
+}
+
+pub enum Value<'a, S, V> 
+where
+    V: Vector<S, Self>,
+{
+    Null,
+    Scalar(S),
+    Vector(V),
+    List(Vec<Self>),
+    Refer(&'a Self),
+}
+```
+
+在reddit上发了问题，得到了好多热心回答，居然也看到了一个好像在做跟我一样事情的人贴出类似的问题。目前看，Rust无法解决。只能先缩窄泛化来解决问题。
+
+```rust
+pub enum Value<'a, T> {
+    Null,
+    Scalar(T),
+    Vector(BTreeMap<T, Self>),
+    List(Vec<Self>),
+    Refer(&'a Self),
+}
+```
+
+使用实体类型BTreeMap代替hyperedge trait。
+
+紧接着是另一个问题。作为超图，hyperedge集合中会有大量重叠的vertex，这个可以用引用来解决。可是一旦出现循环引用，就可能造成内存泄漏及更严重的析构循环抱死。rust给出的做法是使用弱引用 Weak 来避免。对于内部数据结构，使用Weak效率太低了，最好直接使用裸引用。因为内部对象是树状结构，也就是说单向无环的，使用裸引用应该是安全的。但是编程中就怕不小心挂成了循环引用。此时多希望rust能够对树形结构进行规约。解决这个问题的当前思路是分离实体类型和引用类型，通过避免同类型引用来避免循环。
+
+## 2020年5月20日 星期三
+
+当把Graph的Vertex和Edge概念融合后，就是所谓的[hypergraph](https://en.wikipedia.org/wiki/Hypergraph)的概念。为此，新建了一个开源项目：[hypergraph](https://github.com/garyhai/hypergraph) 。新的设计中主要是对hyperedge或者说hypervalue的数据结构定义。其中Scalar及Value的定义比较有新意，或者说离奇。需要经过实际使用的考察。
+
+
+
+## 2020年5月14日 星期四
+
+基本理顺了juniper框架的开发逻辑。里面有几个问题点：
+
+- 整数类型是为什么是i32？可能是从人的角度考虑的。
+- Value，Scalar为什么没有实现GraphQLType？可能还是强类型的出发点。
+- Graph的scheme为什么没有使用更为简洁的trait统一封装？当前的实现还是太难看了。
+- 为什么不支持分级遍历？可能是秉承graphql单一resource入口的原则。
+- Mutation与Query完全一样，没有对`&mut self`支持。可能是生命周期及所有权问题。
+
+等更深入理解juniper后，后续打算做如下改进：
+
+* 定义一个graphql对应的结构
+  * 基于Document结构。
+  * 实现ScarlarValue
+  * 实现GraphQLTypeAsync
+* 定义graphql trait
+* 实现本地和全局注册
+
+## 2020年5月13日 星期三
+
+花了一天时间进行juniper框架下的开发，感觉上如果不碰触宏之外的自定义编程，基本上开发难度和工作量还是可控的。可能主要需要面对的是效率（运行效率和存储效率）问题。juniper已经做了很多艰难的努力，提升效率的同时，带来的后果就是只能用宏来降低开发难度。
+
+今天先使用Toml文件作为持久化数据层，尝试一下动态字段的实现。
+
+折腾一天得出的结论是：在juniper框架下实现动态字段工作量太大，本来也在juniper的重要todo list。当前只能在juniper体系外实现，即对graphql执行结果进行操作。这种强类型模式的确是rust和graphql都强势要求的。
+
 ## 2020年5月12日 星期二
 
 juniper框架动摇了第二版的neunit system架构，解决了ns引入的问题，也带来了新的问题。可预期解决的问题是：
