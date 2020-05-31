@@ -1,3 +1,53 @@
+## 2020年5月31日 星期日
+
+### Deepgraph的概念：
+
+* Deepgraph是hypergraph
+* Vertex 可以是scalar，也可以是hyperedge
+* hyperedge是vertex的集合。
+* hyperedge中vertex通过index被定位到。
+* 一个hyperedge可以层层展开，形成一个普通的有向graph，其edge是vertex的index。
+* Deepgraph可以采用hypergraph方式进行遍历和计算。
+* Deepgraph也可以通过hyperedge的层次模型以有向graph的方式进行遍历和计算。
+
+### Deepgraph建模
+
+- 一个系统就是一个deepgraph
+- 一个子系统是一个graph或者hyperedge。
+- deepgrah作为hypergraph $H=(X, E)$ 对应 $D = (Reistry, Subsystems)$，
+  - 其中X是vertex集合，对应一个全局的registry。从存取访问效率考虑，scalar类型不必存放在Reigstry。
+  - hyperedges是子系统集合
+- Reistry是一个memory arena，存放所有固化类型的Vertex，系统中所有层次中hyperedge的vertex集合中除了scalar类型，均以Registry中的索引作为该vertex的引用。
+
+### 行为模型
+
+* scalar：独立存放的标量类型，通过是基础数据类型。
+* vector：通过索引查找的聚合数据结构的行为，可以是数组、哈希表或者二叉树等。
+* graph：提供query, mutate, subscribe三种行为。
+* state：提供entry/exit两种行为。
+* actor：提供invoke行为。
+
+### 数据结构
+
+* arena：内存管理模块，实现了deepgraph的Registry。用于
+* scalar：枚举型数据，包含整数、浮点数、字符串、二进制块等。
+* vertex：数组和二叉树构成的枚举型。同时实现了Vector, Scalar, Graph, State, Actor的行为。
+* hyperedge/graph/subsystem: vertex。
+* Deepgraph: 包含一个arana结构的registry和一个vector结构的subsystems的结构。
+
+
+
+## 2020年5月25日 星期一
+
+书到用时方恨少。当使用graph模型时，简单入门了图论基础。当与AI算法及GraphQL接口同调建模的时候，需要引入hypergraph的概念，立刻发现理论知识的捉襟见肘。只好硬着头皮先用基础知识做原型建模，同时好好研究一下超图相关的图论知识。
+
+考虑到当下科技现状和实际应用，graph的vertex除了是标量外，更多的情形是一个graph结构的所谓对象，对象内部是一个subgraph。如果用标准Graph模型，会有如下两个问题：
+
+1. 分支节点与叶子节点区分。
+2. Graph遍历与叶子节点内部树的遍历。
+
+如果用hypergraph建模，每个hyperedge与subgraph等效，是一个以数字下标为索引的数组或者是以任意类型为key的Table，而索引对应的值为vector形态的hyperedge或者subgraph。vector集合有空、单值、数组及表形态。
+
 ## 2020年5月22日 星期五
 
 使用rust语言对hypergraph建立数据模型时遇到了障碍。首先是自引用问题。下面的代码能够很好的通过编译，但是，对其实例化的时候出了问题：自引用泛化无法声明类型。
