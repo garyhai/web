@@ -1,6 +1,16 @@
-## 2020年6月14日 星期日
 
-半个月时间在折腾
+## 2020年6月22日 星期一
+
+Graph G = (V, E) 其中V是vertex集合， E是edge集合，其中每个edge是由两个vertex组成 {x, y}，对于有向图，是由第一个vertex x指向第二个vertex y。
+￼
+Hypergraph H = (X, E)，其中X与V一样，都是vertex集合，而E则不再只是两个vertex，而是任意数量的X集合中的vertex。
+
+Deepgraph D = (X, Y), 其中X是vertex集合，Y是edge集合。更进一步，Y中的元素不仅限于vertex，而是任意数量的vertex或者任意数量的edge集合。deepgraph因为出现层次结构，可以理解为一种空间的树状结构，但是与标准的树状结构定义不同，这个树可以是交叉引用并且可能存在环路的。亦即：Y中的一个同样是deepdege的元素，与根D共享Vertex集合X，可以视为是D的subgraph。
+
+deepgraph与hypergraph是等效的，只需要hyperedge元素转换为一种特殊vertex，并把这个hyperedge升级到Y集合中。
+
+如果把层次化的deepgraph类比polyforest结构，则可以把vertex当作是leaf，或者outer vertex，而把hyperedge当作branch，或者叫做 inner vertex。这样以来，vertex与edge的区别变弱，而leaf与branch的区别增强。leaf可以定义为标量scalar, branch可以定义为矢量集vector。那么进一步简化： D = V，其中V是矢量集，包含至少一个vector X。
+
 
 ## 2020年5月31日 星期日
 
